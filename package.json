@@ -1,0 +1,30 @@
+{
+  "name": "apertabot",
+  "version": "1.0.0",
+  "description": "Colin, also do this plsthx",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ApertaTeam/ApertaBot.git"
+  },
+  "keywords": [
+    "colin",
+    "tag",
+    "this",
+    "shit",
+    "please",
+    "lol"
+  ],
+  "author": [
+	"ShadowTheClood <sendmecrap@outlook.com",
+	"Colinator27"
+  ],
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ApertaTeam/ApertaBot/issues"
+  },
+  "homepage": "https://github.com/ApertaTeam/ApertaBot#readme"
+}
