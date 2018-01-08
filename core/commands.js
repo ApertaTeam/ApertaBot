@@ -27,8 +27,7 @@ module.exports = {
 				return handler(msg, args); // This kinda looks like some stairs or something huh?
 			}
 		});
-	},
-	dirty: false
+	}
 };
 
 // Command handlers (made into an array to ease the processCommand function)
