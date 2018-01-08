@@ -47,24 +47,30 @@ client.on('disconnect', event => {
 
 // Message handler
 client.on('message', msg => {
-	if(msg.author == client.user) return; // If message came from bot, ignore
+	// If message came from this (or another) bot, ignore
+	if(msg.author.bot)
+		return;
 	if(!msg.content.startsWith(prefix)) return; // If message does not start with prefix, ignore
 	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g); // Split message by the spaces into arguments, keeping anything in quotes connected
+	
+	var finalargs = args.slice();
 	var name;
 	// If prefix is normal string
-	if(prefix != `<@${client.user.id}>`)
+	if(prefix != `<@${client.user.id}>`){
 		name = args[0].substr(prefix.length); // Grab the name without the prefix
-	else // If prefix is a ping
+		finalargs.splice(0, 1);
+	} else { // If prefix is a ping
 		name = args[1]; // Grab the name from the second argument
+		finalargs.splice(0, 2);
+	}
+
 	logger.logDebug(`Args: ${args}. Name: ${name}`);
-	commandHandler.processCommand(msg, name, args); // Process command
+	commandHandler.processCommand(msg, name, finalargs); // Process command
 });
 
-// Handle exceptions
-process.on('uncaughtException', function (err) {
-	logger.logError(`Uncaught exception: ${err}`);
-	process.exit(1);
-});
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 // Clean up upon exiting the program
 var hasCleanedUp = false;
@@ -75,6 +81,8 @@ async function exitHandler(exit){
 		hasCleanedUp = true;
 		logger.logInfo("Cleaning up and logging out.");
 		await client.destroy();
+		logger.logInfo("Sleeping for 3 seconds...");
+		await sleep(3000);
 	} catch(e){
 		logger.logError(e);
 		process.exit(1);
