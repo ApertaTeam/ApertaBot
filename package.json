@@ -1,7 +1,7 @@
 {
   "name": "apertabot",
-  "version": "1.0.0",
-  "description": "Colin, also do this plsthx",
+  "version": "0.1.0",
+  "description": "An open-source Discord bot",
   "main": "index.js",
   "scripts": {
     "test": "node index.js --test"
@@ -11,20 +11,25 @@
     "url": "git+https://github.com/ApertaTeam/ApertaBot.git"
   },
   "keywords": [
-    "colin",
-    "tag",
-    "this",
-    "shit",
-    "please",
-    "lol"
+    "discord",
+    "bot"
   ],
   "author": [
-	"ShadowTheClood <sendmecrap@outlook.com",
-	"Colinator27"
+    "ShadowTheClood <sendmecrap@outlook.com>",
+    "colinator27"
   ],
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/ApertaTeam/ApertaBot/issues"
   },
-  "homepage": "https://github.com/ApertaTeam/ApertaBot#readme"
+  "homepage": "https://github.com/ApertaTeam/ApertaBot#readme",
+  "dependencies": {
+    "discord.js": "^11.2.1",
+    "ffmpeg-binaries": "^3.2.2-3",
+    "nedb": "^1.8.0",
+    "opusscript": "0.0.6"
+  },
+  "engines": {
+    "node": "9.3.0"
+  }
 }
