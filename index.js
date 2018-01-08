@@ -21,18 +21,17 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 const commandHandler = require('./core/commands.js');
-commandHandler.initialize();
 
-// Temporary prefix
-var prefix;
+let guildData;
+
+const storageHandler = require('./core/storage.js');
 
 // Once logged in, handle initialization of other things
 client.on('ready', () => {
 	logger.logInfo("Bot is now ready and logged in.");
-	// If prefixed is not defined, make it a ping
-	if(prefix == null || prefix == undefined || prefix == "") {
-		prefix = `<@${client.user.id}>`;
-	}
+	storageHandler.initialize(client);
+	commandHandler.initialize(storageHandler);
+	guildData = storageHandler.databases.guildDb.getAllData()[0];	
 });
 
 // Set up the callbacks for logging
@@ -47,22 +46,34 @@ client.on('disconnect', event => {
 
 // Message handler
 client.on('message', msg => {
-	if(msg.author == client.user) return; // If message came from bot, ignore
-	if(!msg.content.startsWith(prefix)) return; // If message does not start with prefix, ignore
+	
+	guildData = storageHandler.databases.guildDb.getAllData()[0];
+
+	// If prefix for this guild is not defined, make it a bot ping!
+	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "") guildData[msg.guild.id].prefix = `<@${client.user.id}>`;
+
+	if(msg.author.bot) return; // If message came from bot, ignore
+
+	if(!msg.content.startsWith(guildData[msg.guild.id].prefix)) return; // If message does not start with prefix, ignore
+
 	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g); // Split message by the spaces into arguments, keeping anything in quotes connected
-	var name;
-	// If prefix is normal string
-	if(prefix != `<@${client.user.id}>`)
-		name = args[0].substr(prefix.length); // Grab the name without the prefix
-	else // If prefix is a ping
-		name = args[1]; // Grab the name from the second argument
+
+	// If prefix is a ping
+	if(guildData[msg.guild.id].prefix == `<@${client.user.id}>`)
+		args.splice(0, 1); // Remove ping from arguments
+
+	var name = args[0].replace(guildData[msg.guild.id].prefix, ""); // Grab function name without the prefix
+
+	args.splice(0, 1); // Finally remove the name of the command
+
 	logger.logDebug(`Args: ${args}. Name: ${name}`);
-	commandHandler.processCommand(msg, name, args); // Process command
+
+	commandHandler.processCommand(msg, name, args); // Process command	
 });
 
 // Handle exceptions
 process.on('uncaughtException', function (err) {
-	logger.logError(`Uncaught exception: ${err}`);
+	logger.logError(`Uncaught exception: ${err.stack}`);
 	process.exit(1);
 });
 
