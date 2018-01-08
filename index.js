@@ -23,9 +23,16 @@ const client = new Discord.Client();
 const commandHandler = require('./core/commands.js');
 commandHandler.initialize();
 
+// Temporary prefix
+var prefix;
+
 // Once logged in, handle initialization of other things
 client.on('ready', () => {
 	logger.logInfo("Bot is now ready and logged in.");
+	// If prefixed is not defined, make it a ping
+	if(prefix == null || prefix == undefined || prefix == "") {
+		prefix = `<@${client.user.id}>`;
+	}
 });
 
 // Set up the callbacks for logging
@@ -38,15 +45,17 @@ client.on('disconnect', event => {
 	logger.logError(`Disconnected from Discord. CloseEvent code: ${event.code}. Reason: ${event.reason}`);
 });
 
-// Temporary prefix
-var prefix = "a!";
-
 // Message handler
 client.on('message', msg => {
 	if(msg.author == client.user) return; // If message came from bot, ignore
 	if(!msg.content.startsWith(prefix)) return; // If message does not start with prefix, ignore
-	var args = msg.content.split(" "); // Split message by the spaces into arguments
-	var name = args[0].substr(prefix.length); // Grab the name without the prefix
+	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g); // Split message by the spaces into arguments, keeping anything in quotes connected
+	var name;
+	// If prefix is normal string
+	if(prefix != `<@${client.user.id}>`)
+		name = args[0].substr(prefix.length); // Grab the name without the prefix
+	else // If prefix is a ping
+		name = args[1]; // Grab the name from the second argument
 	logger.logDebug(`Args: ${args}. Name: ${name}`);
 	commandHandler.processCommand(msg, name, args); // Process command
 });

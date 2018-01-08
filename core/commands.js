@@ -1,8 +1,10 @@
 'use strict';
 
 const fs = require('fs');
+const Discord = require('discord.js');
 
 var commands;
+var creators;
 
 module.exports = {
 	initialize: () => {
@@ -12,6 +14,7 @@ module.exports = {
 			throw "Invalid config.json";
 		}
 		commands = data.commands;
+		creators = data.creatorIds;
 	},
 	processCommand: (msg, name, args) => {
 		// Iterate through all the handlers
@@ -31,7 +34,12 @@ let handlers = [
 		msg.channel.send("It would appear as if I am alive right now.");
 	},
 	function cmd_test(msg, args){
-		msg.channel.send("Testing 1 2 3");
+		var embed = new Discord.RichEmbed()
+			.addField("Command", "test")
+			.addField("Arguments", args.toString().replace(/,/g, ", "))
+			.addField("Is Creator?", creators.indexOf(msg.author.id) != -1 ? "True" : "False")
+			.setColor("#ff0000");
+		msg.channel.send(`Testing 1 2 3`, {embed});
 	},
 	function cmd_invite(msg, args){
 		msg.client.generateInvite(['SEND_MESSAGES', 'MANAGE_GUILD', 'MENTION_EVERYONE']).then(link => {
