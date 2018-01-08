@@ -38,6 +38,19 @@ client.on('disconnect', event => {
 	logger.logError(`Disconnected from Discord. CloseEvent code: ${event.code}. Reason: ${event.reason}`);
 });
 
+// Temporary prefix
+var prefix = "a!";
+
+// Message handler
+client.on('message', msg => {
+	if(msg.author == client.user) return; // If message came from bot, ignore
+	if(!msg.content.startsWith(prefix)) return; // If message does not start with prefix, ignore
+	var args = msg.content.split(" "); // Split message by the spaces into arguments
+	var name = args[0].substr(prefix.length); // Grab the name without the prefix
+	logger.logDebug(`Args: ${args}. Name: ${name}`);
+	commandHandler.processCommand(msg, name, args); // Process command
+});
+
 // Handle exceptions
 process.on('uncaughtException', function (err) {
 	logger.logError(`Uncaught exception: ${err}`);
