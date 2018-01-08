@@ -75,6 +75,10 @@ function sleep (time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+process.on('uncaughtException', err => {
+	logger.logError(`Uncaught eexception: ${err.stack}`);
+});
+
 // Clean up upon exiting the program
 var hasCleanedUp = false;
 async function exitHandler(exit){
