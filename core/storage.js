@@ -10,7 +10,7 @@ if(datadir.endsWith("/"))
 var databases = { 
 	guildDb: new Datastore({ 
 			filename: datadir + "/guilds.db", 
-			autoload: true });
+			autoload: true })
 };
 
 module.exports = {
