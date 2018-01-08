@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const Discord = require('discord.js');
+const logger = require("./logger.js");
 
 var commands;
 var creators;
@@ -30,10 +31,57 @@ module.exports = {
 	}
 };
 
+var tempPrefix = "prefix!";
+
+function get_command_syntax(name){
+	let found = false;
+	let syntax = undefined;
+	commands.forEach(command => {
+		if(command.name == name){
+			found = true;
+			syntax = command.syntax.replace("[PREFIX]", tempPrefix);
+		}
+	});
+	if(!found){
+		logger.logError("Failed to get syntax for a command");
+		return "An error occurred";
+	} else {
+		return syntax;
+	}
+}
+
 // Command handlers (made into an array to ease the processCommand function)
 let handlers = [
 	function cmd_help(msg, args){
-		msg.channel.send("It would appear as if I am alive right now.");
+		if(args.length == 1){
+			let found = false;
+			// Loop through the commands config, find the command
+			commands.forEach(command => {
+				if(command.name == args[0]){
+					found = true;
+					msg.author.send(`\`\`\`\nSyntax for command ${args[0]}:\n${get_command_syntax(args[0])}\n\`\`\``);
+				}
+			});
+			// If it doesn't exist, display an error
+			if(!found){
+				msg.author.send("That command doesn't exist!");
+			}
+		} else {
+			// Display syntax and commands
+			let stringBuild = "```\n";
+			stringBuild += `Syntax:\n${get_command_syntax('help')}\n\nCommands:\n`;
+			commands.forEach(command => {
+				if(command.name == "help")
+					return;
+				stringBuild += `\n--- ${command.name} ---\n${command.description}\n${get_command_syntax(command.name)}\n`;
+			});
+			stringBuild += "\n```";
+			if(stringBuild.length >= 2000){
+				logger.logError("Help command string is too long, requires updating");
+				return;
+			}
+			msg.author.send(stringBuild);
+		}
 	},
 	function cmd_test(msg, args){
 		var embed = new Discord.RichEmbed()
