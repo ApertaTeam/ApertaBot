@@ -5,16 +5,18 @@ const Discord = require('discord.js');
 
 var commands;
 var creators;
+var storage;
 
 module.exports = {
-	initialize: () => {
-		let textdata = fs.readFileSync('./config.json');  
-		let data = JSON.parse(textdata);
+	initialize: (storageHandler) => {
+		//let textdata = fs.readFileSync('./config.json');  
+		let data = require('../config.json');//JSON.parse(textdata);
 		if (!data.commands){
 			throw "Invalid config.json";
 		}
 		commands = data.commands;
 		creators = data.creatorIds;
+		storage = storageHandler;
 	},
 	processCommand: (msg, name, args) => {
 		// Iterate through all the handlers
@@ -25,7 +27,8 @@ module.exports = {
 				return handler(msg, args); // This kinda looks like some stairs or something huh?
 			}
 		});
-	}
+	},
+	dirty: false
 };
 
 // Command handlers (made into an array to ease the processCommand function)
@@ -45,5 +48,11 @@ let handlers = [
 		msg.client.generateInvite(['SEND_MESSAGES', 'MANAGE_GUILD', 'MENTION_EVERYONE']).then(link => {
 			msg.channel.send(`Here's my invite link! ${link}`);
 		});
+	},
+	function cmd_prefix(msg, args){
+		var guildid = msg.guild.id;
+		var prefix = {};
+		storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null);		
+		msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : "a direct ping to the bot!"}`);
 	}
 ]
