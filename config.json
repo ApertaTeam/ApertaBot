@@ -1,15 +1,15 @@
 {
-	"logLevel":"3",
-	"commands":[
+	"logLevel": "3",
+	"commands": [
 		{
-			"name":"help",
-			"syntax":"[PREFIX]help <optional: command name>",
-			"description":"Gets help with commands and how to use the bot."
+			"name": "help",
+			"syntax": "[PREFIX]help <optional: command name>",
+			"description": "Gets help with commands and how to use the bot."
 		},
 		{
-			"name":"test",
-			"syntax":"[PREFIX]test",
-			"description":"Checks if the bot happens to be alive."
+			"name": "test",
+			"syntax": "[PREFIX]test",
+			"description": "Checks if the bot happens to be alive."
 		}
 	],
 	"creatorIds": [
