@@ -73,6 +73,10 @@ client.on('message', msg => {
 	commandHandler.processCommand(msg, name, args); // Process command	
 });
 
+client.on('guildCreate', guild => {
+	storageHandler.addInGuild(guild.id, "prefix", "a!");
+});
+
 function sleep (time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
