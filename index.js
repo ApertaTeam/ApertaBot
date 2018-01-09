@@ -46,13 +46,15 @@ client.on('disconnect', event => {
 
 // Message handler
 client.on('message', msg => {
-	
-	guildData = storageHandler.databases.guildDb.getAllData()[0];
 
-	// If prefix for this guild is not defined, make it a bot ping!
-	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "") guildData[msg.guild.id].prefix = `<@${client.user.id}>`;
+	if(msg.guild == null) return; // If message did not come from a guild, ignore
 
 	if(msg.author.bot) return; // If message came from bot, ignore
+
+	guildData = storageHandler.databases.guildDb.getAllData()[0];
+	
+	// If prefix for this guild is not defined, make it a bot ping!
+	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "") guildData[msg.guild.id].prefix = `<@${client.user.id}>`;	
 
 	if(!msg.content.startsWith(guildData[msg.guild.id].prefix)) return; // If message does not start with prefix, ignore
 
@@ -76,7 +78,7 @@ function sleep (time) {
 }
 
 process.on('uncaughtException', err => {
-	logger.logError(`Uncaught eexception: ${err.stack}`);
+	logger.logError(`Uncaught exception: ${err.stack}`);
 });
 
 // Clean up upon exiting the program
