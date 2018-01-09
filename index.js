@@ -77,6 +77,10 @@ client.on('guildCreate', guild => {
 	storageHandler.addInGuild(guild.id, "prefix", "a!");
 });
 
+client.on('guildDelete', guild => {
+	storageHandler.removeGuild(guild.id);
+});
+
 function sleep (time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }

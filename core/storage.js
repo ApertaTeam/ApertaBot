@@ -42,5 +42,10 @@ module.exports = {
 		databases.guildDb.update({ _id: "guilds" }, { $set: { [guild]: { [element]: value } } }, {}, function (err) {
 			if (err) throw err;
 		});		
+	},
+	removeGuild: function (guild) {
+		databases.guildDb.remove({ [guild]: { $exists: true } }, {}, err => {
+			if (err) throw err;
+		});
 	}
 };
