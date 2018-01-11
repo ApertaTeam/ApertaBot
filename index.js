@@ -46,31 +46,41 @@ client.on('disconnect', event => {
 
 // Message handler
 client.on('message', msg => {
+	// If message did not come from a guild, ignore
+	if(!msg.guild)
+		return;
 
-	if(msg.guild == null) return; // If message did not come from a guild, ignore
-
-	if(msg.author.bot) return; // If message came from bot, ignore
+	// If message came from bot, ignore
+	if(msg.author.bot) 
+		return;
 
 	guildData = storageHandler.databases.guildDb.getAllData()[0];
 	
 	// If prefix for this guild is not defined, make it a bot ping!
-	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "") guildData[msg.guild.id].prefix = `<@${client.user.id}>`;	
+	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "")
+		guildData[msg.guild.id].prefix = `<@${client.user.id}>`;	
 
-	if(!msg.content.startsWith(guildData[msg.guild.id].prefix)) return; // If message does not start with prefix, ignore
+	// If message does not start with prefix, ignore
+	if(!msg.content.startsWith(guildData[msg.guild.id].prefix))
+		return;
 
-	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g); // Split message by the spaces into arguments, keeping anything in quotes connected
+	// Split message by the spaces into arguments, keeping anything in quotes connected
+	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g);
 
 	// If prefix is a ping
 	if(guildData[msg.guild.id].prefix == `<@${client.user.id}>`)
-		args.splice(0, 1); // Remove ping from arguments
+		args.splice(0, 1);
 
-	var name = args[0].replace(guildData[msg.guild.id].prefix, ""); // Grab function name without the prefix
+	// Grab function name without the prefix
+	var name = args[0].replace(guildData[msg.guild.id].prefix, "");
 
-	args.splice(0, 1); // Finally remove the name of the command
+	// Finally remove the name of the command
+	args.splice(0, 1);
 
-	logger.logDebug(`Args: ${args}. Name: ${name}`);
+	logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
 
-	commandHandler.processCommand(msg, name, args); // Process command	
+	// Finally, process the command
+	commandHandler.processCommand(msg, name, args);
 });
 
 function sleep (time) {
