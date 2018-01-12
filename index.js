@@ -39,11 +39,11 @@ function connectQuotes (args) {
 		if(!inline) {
 			if(arg.indexOf('"') != arg.lastIndexOf('"') || arg.indexOf("'") != arg.lastIndexOf("'")) {
 				tempArgs.push(arg);
-			} else if(arg.startsWith('"')) {
+			} else if(arg.includes('"')) {
 				type = '"';
 				inline = true;
 				tempString += arg + ' ';
-			} else if (arg.startsWith("'")) {
+			} else if (arg.includes("'")) {
 				type = "'";
 				inline = true;
 				tempString += arg + ' ';
