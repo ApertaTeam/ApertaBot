@@ -12,9 +12,9 @@ if(!('CLIENT_TOKEN' in process.env)){
 	return;
 }
 
-if(!('APERTABOT_DATABASE_DIR' in process.env)){
-	logger.logError("Environment variable \"APERTABOT_DATABASE_DIR\" must be set (temporarily) to be able to operate databases.");
-	return;
+if(!('APERTABOT_DATABASE_DIR' in process.env)){	
+	logger.logWarn("Environment variable \"APERTABOT_DATABASE_DIR\" not set, defaulting to \"./Databases\"");
+	process.env.APERTABOT_DATABASE_DIR = "./Databases";
 }
 
 const Discord = require('discord.js');
@@ -25,6 +25,45 @@ const commandHandler = require('./core/commands.js');
 let guildData;
 
 const storageHandler = require('./core/storage.js');
+
+/**
+ * Quick little helper function to connect quotes together
+ * @param {Array<string>} args 
+ */
+function connectQuotes (args) {
+	var tempArgs = [];
+	var tempString = "";
+	var inline = false;
+	var type = null;
+	args.forEach(arg => {		
+		if(!inline) {
+			if(arg.indexOf('"') != arg.lastIndexOf('"') || arg.indexOf("'") != arg.lastIndexOf("'")) {
+				tempArgs.push(arg);
+			} else if(arg.startsWith('"')) {
+				type = '"';
+				inline = true;
+				tempString += arg + ' ';
+			} else if (arg.startsWith("'")) {
+				type = "'";
+				inline = true;
+				tempString += arg + ' ';
+			} else {
+				tempArgs.push(arg);
+			}
+		} else {
+			if(arg.includes(type)) {				
+				tempString += arg;
+				inline = false;
+				type = null;
+				tempArgs.push(tempString);
+				tempString = "";
+			} else {
+				tempString += arg + ' ';
+			}
+		}
+	});
+	return tempArgs;
+}
 
 // Once logged in, handle initialization of other things
 client.on('ready', () => {
@@ -75,8 +114,10 @@ client.on('message', msg => {
 	if(!msg.content.startsWith(guildData[msg.guild.id].prefix))
 		return;
 
-	// Split message by the spaces into arguments, keeping anything in quotes connected
-	var args = msg.content.match(/[^"\s]+|"(?:\\"|[^"])+"/g);
+	msg.prefix = guildData[msg.guild.id].prefix;
+
+	// Split message by the spaces into arguments
+	var args = msg.content.split(" ");	
 
 	// If prefix is a ping
 	if(guildData[msg.guild.id].prefix == `<@${client.user.id}>`)
@@ -87,6 +128,9 @@ client.on('message', msg => {
 
 	// Finally remove the name of the command
 	args.splice(0, 1);
+
+	// Connects quotes together, if there are any.
+	args = connectQuotes(args);
 
 	logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
 

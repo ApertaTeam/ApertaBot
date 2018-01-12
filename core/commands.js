@@ -52,13 +52,13 @@ function evaluate (code) {
 
 var tempPrefix = "prefix!";
 
-function get_command_syntax(name){
+function get_command_syntax(name, prefix){
 	let found = false;
 	let syntax = undefined;
 	commands.forEach(command => {
 		if(command.name == name){
 			found = true;
-			syntax = command.syntax.replace("[PREFIX]", tempPrefix);
+			syntax = command.syntax.replace("[PREFIX]", prefix);
 		}
 	});
 	if(!found){
@@ -78,7 +78,7 @@ let handlers = [
 			commands.forEach(command => {
 				if(command.name == args[0]){
 					found = true;
-					msg.author.send(`\`\`\`\nSyntax for command ${args[0]}:\n${get_command_syntax(args[0])}\n\`\`\``);
+					msg.author.send(`\`\`\`\nSyntax for command ${args[0]}:\n${get_command_syntax(args[0], msg.prefix)}\n\`\`\``);
 				}
 			});
 			// If it doesn't exist, display an error
@@ -88,11 +88,11 @@ let handlers = [
 		} else {
 			// Display syntax and commands
 			let stringBuild = "```\n";
-			stringBuild += `Syntax:\n${get_command_syntax('help')}\n\nCommands:\n`;
+			stringBuild += `Syntax:\n${get_command_syntax('help', msg.prefix)}\n\nCommands:\n`;
 			commands.forEach(command => {
 				if(command.name == "help")
 					return;
-				stringBuild += `\n--- ${command.name} ---\n${command.description}\n${get_command_syntax(command.name)}\n`;
+				stringBuild += `\n--- ${command.name} ---\n${command.description}\n${get_command_syntax(command.name, msg.prefix)}\n`;
 			});
 			stringBuild += "\n```";
 			if(stringBuild.length >= 2000){
@@ -120,6 +120,24 @@ let handlers = [
 		var prefix = {};
 		storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null);		
 		msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : "a direct ping to the bot!"}`);
+	},
+	function cmd_sudo(msg, args){
+		if(!creators && msg.author);
+		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s) can use this command!");		
+	},
+	function cmd_docs(msg, args){
+		if(args.length > 1) return msg.channel.send("Too many arguments!");
+		var baseURL = `https://discord.js.org/#/docs/main/${Discord.version.substring(0,Discord.version.lastIndexOf('.'))}.0`;
+		var querys = args[0].split("#");
+		if(querys.length == 1) {
+			if(querys[0].startsWith('.'))
+				return msg.channel.send(`${baseURL}/typedef/${querys[0]}`);
+			return msg.channel.send(`${baseURL}/class/${querys[0]}`);
+		} else if(querys.length == 2) {
+			return msg.channel.send(`${baseURL}/class/${querys[0]}?scrollTo=${querys[1]}`);
+		} else {
+			return msg.channel.send("Incorrect format.");
+		}
 	},
 	function cmd_eval(msg, args){
 		// Just to make sure people don't use it to exploit the bot and shizzle ;P
