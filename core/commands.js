@@ -14,9 +14,10 @@ var storage;
 module.exports = {
 	initialize: (storageHandler) => {		
 		let data = require('../config.json');
-		if (!data.commands){
-			throw "Invalid config.json";
+		if (!data.commands || !data.creatorIds){
+			throw new Error("Invalid config.json");
 		}
+		// Assign variables for use later
 		commands = data.commands;
 		creators = data.creatorIds;
 		storage = storageHandler;
@@ -29,7 +30,9 @@ module.exports = {
 			if(handler.name == `cmd_${name}`) {
 				// If so, break out of the loop with a return, calling the handler as well
 				found = true;
-				return handler(msg, args);
+				if(!handler(msg, args)){
+					msg.channel.send(`Invalid command syntax.\nProper syntax:\n\`\`\`\n${get_command_syntax(name)}\n\`\`\``);
+				}
 			}
 		});
 		if(!found){
@@ -57,8 +60,6 @@ function evaluate (code) {
 		}
 	});
 }
-
-var tempPrefix = "prefix!";
 
 function get_command_syntax(name, prefix){
 	let found = false;
@@ -109,6 +110,7 @@ let handlers = [
 			}
 			msg.author.send(stringBuild);
 		}
+		return true;
 	},
 	function cmd_test(msg, args){
 		var embed = new Discord.RichEmbed()
@@ -117,24 +119,28 @@ let handlers = [
 			.addField("Is Creator?", creators.indexOf(msg.author.id) != -1 ? "True" : "False")
 			.setColor("#ff0000");
 		msg.channel.send(`Testing 1 2 3`, {embed});
+		return true;
 	},
 	function cmd_invite(msg, args){
 		msg.client.generateInvite(['SEND_MESSAGES', 'MANAGE_GUILD', 'MENTION_EVERYONE']).then(link => {
 			msg.channel.send(`Here's my invite link! ${link}`);
 		});
+		return true;
 	},
 	function cmd_prefix(msg, args){
 		var guildid = msg.guild.id;
 		var prefix = {};
 		storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null);		
 		msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : "a direct ping to the bot!"}`);
+		return true;
 	},
 	function cmd_sudo(msg, args){
 		if(!creators && msg.author);
-		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s) can use this command!");		
+		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s)/runner(s) can use this command!");	
+		return true;	
 	},
 	function cmd_docs(msg, args){
-		if(args.length > 1) return msg.channel.send("Too many arguments!");
+		if(args.length > 1) return false;
 		var baseURL = `https://discord.js.org/#/docs/main/${Discord.version.substring(0,Discord.version.lastIndexOf('.'))}.0`;
 		var querys = args[0].split("#");
 		if(querys.length == 1) {
@@ -146,10 +152,11 @@ let handlers = [
 		} else {
 			return msg.channel.send("Incorrect format.");
 		}
+		return true;
 	},
 	function cmd_eval(msg, args){
 		// Just to make sure people don't use it to exploit the bot and shizzle ;P
-		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s) can use this command!");
+		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s)/runner(s) can use this command!");
 		var code = args.join(' ');
 		evaluate(code).then(evaled => {						
 			// This will give us the stringified version of the returned evaluated code.
@@ -177,5 +184,6 @@ let handlers = [
 			logger.logError(err.stack);
 			return msg.channel.send(`Eval returned the following error: ${err.message}`);
 		});
+		return true;
 	}
 ]
