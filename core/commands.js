@@ -22,14 +22,22 @@ module.exports = {
 		storage = storageHandler;
 	},
 	processCommand: (msg, name, args) => {
+		let found = false;
 		// Iterate through all the handlers
 		handlers.forEach(handler => {
 			// Checks if the current command handler is the one we want
 			if(handler.name == `cmd_${name}`) {
 				// If so, break out of the loop with a return, calling the handler as well
+				found = true;
 				return handler(msg, args);
 			}
 		});
+		if(!found){
+			// Alert the user that the command was not recognized.
+			msg.channel.send("Command not recognized.");
+		} else {
+			// Perform any post-processing if necessary
+		}
 	}
 };
 
@@ -63,7 +71,7 @@ function get_command_syntax(name){
 	});
 	if(!found){
 		logger.logError("Failed to get syntax for a command");
-		return "An error occurred";
+		return "<failed to find command, invalid configuration>";
 	} else {
 		return syntax;
 	}

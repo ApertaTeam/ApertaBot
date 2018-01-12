@@ -41,7 +41,7 @@ client.on('warn', msg => logger.logWarn(msg));
 
 // Exit when disconnected
 client.on('disconnect', event => {
-	logger.logError(`Disconnected from Discord. CloseEvent code: ${event.code}. Reason: ${event.reason}`);
+	logger.logWarn(`Disconnected from Discord. CloseEvent code: ${event.code}. Reason: ${event.reason}`);
 });
 
 // Message handler
@@ -102,13 +102,13 @@ client.on('guildDelete', guild => {
 	storageHandler.removeGuild(guild.id);
 });
 
-function sleep (time) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
-
 process.on('uncaughtException', err => {
 	logger.logError(`Uncaught exception: ${err.stack}`);
 });
+
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 // Clean up upon exiting the program
 var hasCleanedUp = false;

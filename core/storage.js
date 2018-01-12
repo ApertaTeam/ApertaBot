@@ -6,7 +6,7 @@ const Datastore = require('nedb');
 var datadir = process.env.APERTABOT_DATABASE_DIR;
 if(datadir.endsWith("/"))
 	datadir = datadir.slice(0, -1);
-console.log(datadir);
+logger.logDebug(`Database directory: ${datadir}`);
 
 var databases = { 
 	guildDb: new Datastore({ 
