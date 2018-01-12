@@ -55,6 +55,17 @@ client.on('message', msg => {
 		return;
 
 	guildData = storageHandler.databases.guildDb.getAllData()[0];
+
+	// If guild isn't in the database, update it
+	if (!guildData[msg.guild.id]) {
+		// Add the prefix element to the database under the guild id, thus adding the guild to the database
+		storageHandler.addInGuild(msg.guild.id, 'prefix', 'a!');
+
+		// Since we've updated the database, we need to update the guildData variable
+		guildData = storageHandler.databases.guildDb.getAllData()[0];
+	}
+
+	
 	
 	// If prefix for this guild is not defined, make it a bot ping!
 	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "")
