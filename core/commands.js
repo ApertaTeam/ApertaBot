@@ -10,17 +10,32 @@ var commands;
  */
 var creators;
 var storage;
+let dclient;
+
+var CommandStatus = {
+	Success: 0,
+	InvalidSyntax: 1,
+	NoPermission: 2,
+	NoAdminPermission: 3,
+	BotAdminsOnly: 4,
+	InternalError: 5
+};
 
 module.exports = {
-	initialize: (storageHandler) => {		
+	initialize: (storageHandler, client) => {
+		logger.logInfo("Initializing command module");
+
+		// Load config.json
 		let data = require('../config.json');
 		if (!data.commands || !data.creatorIds){
 			throw new Error("Invalid config.json");
 		}
+
 		// Assign variables for use later
 		commands = data.commands;
 		creators = data.creatorIds;
 		storage = storageHandler;
+		dclient = client;
 	},
 	processCommand: (msg, name, args) => {
 		let found = false;
@@ -30,8 +45,28 @@ module.exports = {
 			if(handler.name == `cmd_${name}`) {
 				// If so, break out of the loop with a return, calling the handler as well
 				found = true;
-				if(!handler(msg, args)){
-					msg.channel.send(`Invalid command syntax.\nProper syntax:\n\`\`\`\n${get_command_syntax(name)}\n\`\`\``);
+				let status = handler(msg, args);
+				if(status != CommandStatus.Success){
+					switch(status){
+						case CommandStatus.InvalidSyntax:
+							msg.channel.send(`Invalid command syntax.\nProper syntax:\n\`\`\`\n${get_command_syntax(name, msg.prefix)}\n\`\`\``);
+							break;
+						case CommandStatus.NoPermission:
+							msg.channel.send("You do not have permissions to do that.");
+							break;
+						case CommandStatus.NoAdminPermission:
+							msg.channel.send("You must be a server administrator to do that.");
+							break;
+						case CommandStatus.InternalError:
+							msg.channel.send("An internal error occurred when executing that command.");
+							break;
+						case CommandStatus.BotAdminsOnly:
+							msg.channel.send("Only bot administrators can do that.");
+							break;
+						default:
+							msg.channel.send("Something went wrong internally.\nTechnical details: Command function returned invalid CommandStatus code.");
+							break;
+					}
 				}
 			}
 		});
@@ -62,6 +97,11 @@ function evaluate (code) {
 }
 
 function get_command_syntax(name, prefix){
+	if(prefix.startsWith("<@")){
+		if(prefix == `<@${dclient.user.id}>`){
+			prefix = `<@${dclient.user.username}> `;
+		}
+	}
 	let found = false;
 	let syntax = undefined;
 	commands.forEach(command => {
@@ -87,7 +127,7 @@ let handlers = [
 			commands.forEach(command => {
 				if(command.name == args[0]){
 					found = true;
-					msg.author.send(`\`\`\`\nSyntax for command ${args[0]}:\n${get_command_syntax(args[0], msg.prefix)}\n\`\`\``);
+					msg.author.send(`\`\`\`\nSyntax for command "${args[0]}":\n${get_command_syntax(args[0], msg.prefix)}\n\`\`\``);
 				}
 			});
 			// If it doesn't exist, display an error
@@ -106,57 +146,72 @@ let handlers = [
 			stringBuild += "\n```";
 			if(stringBuild.length >= 2000){
 				logger.logError("Help command string is too long, requires updating");
-				return;
+				return CommandStatus.InternalError;
 			}
 			msg.author.send(stringBuild);
 		}
-		return true;
+		return CommandStatus.Success;
 	},
 	function cmd_test(msg, args){
-		var embed = new Discord.RichEmbed()
-			.addField("Command", "test")
-			.addField("Arguments", args.toString().replace(/,/g, ", "))
-			.addField("Is Creator?", creators.indexOf(msg.author.id) != -1 ? "True" : "False")
-			.setColor("#ff0000");
-		msg.channel.send(`Testing 1 2 3`, {embed});
-		return true;
+		msg.channel.send("I'm alive!");
+		return CommandStatus.Success;
 	},
 	function cmd_invite(msg, args){
 		msg.client.generateInvite(['SEND_MESSAGES', 'MANAGE_GUILD', 'MENTION_EVERYONE']).then(link => {
 			msg.channel.send(`Here's my invite link! ${link}`);
 		});
-		return true;
+		return CommandStatus.Success;
 	},
 	function cmd_prefix(msg, args){
+		if(!msg.member)
+			return CommandStatus.NoPermission;
+		if(!msg.member.hasPermission('ADMINISTRATOR'))
+			return CommandStatus.NoAdminPermission;
+		if (args.length > 1) 
+			return CommandStatus.InvalidSyntax;
 		var guildid = msg.guild.id;
 		var prefix = {};
-		storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null);		
-		msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : "a direct ping to the bot!"}`);
-		return true;
+		if (args[0] != undefined){
+			if (args[0].length > 6){
+				msg.channel.send("Sorry, the maximum length for a prefix is **6** characters.");
+				return CommandStatus.Success;
+			}
+		}
+		storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null).then(() => {		
+			msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : `A direct ping to the bot! For example:\n<@${msg.client.user.id}>`}`);
+		});
+		return CommandStatus.Success;
 	},
 	function cmd_sudo(msg, args){
 		if(!creators && msg.author);
-		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s)/runner(s) can use this command!");	
-		return true;	
+		if(!creators.includes(msg.author.id)) 
+			return CommandStatus.BotAdminsOnly;
+		return CommandStatus.Success;
 	},
 	function cmd_docs(msg, args){
-		if(args.length > 1) return false;
+		if(!creators.includes(msg.author.id)) 
+			return CommandStatus.BotAdminsOnly;
+		if(args.length != 1) 
+			return CommandStatus.InvalidSyntax;
 		var baseURL = `https://discord.js.org/#/docs/main/${Discord.version.substring(0,Discord.version.lastIndexOf('.'))}.0`;
 		var querys = args[0].split("#");
 		if(querys.length == 1) {
-			if(querys[0].startsWith('.'))
-				return msg.channel.send(`${baseURL}/typedef/${querys[0]}`);
-			return msg.channel.send(`${baseURL}/class/${querys[0]}`);
+			if(querys[0].startsWith('.')){
+				msg.channel.send(`${baseURL}/typedef/${querys[0]}`);
+				return CommandStatus.Success;
+			}
+			msg.channel.send(`${baseURL}/class/${querys[0]}`);
 		} else if(querys.length == 2) {
-			return msg.channel.send(`${baseURL}/class/${querys[0]}?scrollTo=${querys[1]}`);
+			msg.channel.send(`${baseURL}/class/${querys[0]}?scrollTo=${querys[1]}`);
 		} else {
-			return msg.channel.send("Incorrect format.");
+			msg.channel.send("Incorrect format.");
 		}
-		return true;
+		return CommandStatus.Success;
 	},
 	function cmd_eval(msg, args){
 		// Just to make sure people don't use it to exploit the bot and shizzle ;P
-		if(!creators.includes(msg.author.id)) return msg.channel.send("Only the bot owner(s)/runner(s) can use this command!");
+		if(!creators.includes(msg.author.id))
+			return CommandStatus.BotAdminsOnly;
 		var code = args.join(' ');
 		evaluate(code).then(evaled => {						
 			// This will give us the stringified version of the returned evaluated code.
@@ -172,7 +227,7 @@ let handlers = [
 				.addField('**Eval Input**', '```js\n' + code + '\n```')
 				.addField('**Eval Output**', '```js\n' + evaledString + '\n```');
 
-			return msg.channel.send({embed});		
+			return msg.channel.send({embed});
 		}, reject => {
 			// I'm logging the actual stack to the console just in case it's a code error
 			logger.logError(reject.stack);
@@ -184,6 +239,6 @@ let handlers = [
 			logger.logError(err.stack);
 			return msg.channel.send(`Eval returned the following error: ${err.message}`);
 		});
-		return true;
+		return CommandStatus.Success;
 	}
-]
+];

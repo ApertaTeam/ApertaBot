@@ -9,62 +9,104 @@ if(datadir.endsWith("/"))
 logger.logDebug(`Database directory: ${datadir}`);
 
 var databases = { 
-	guildDb: new Datastore({ 
+	guilds: new Datastore({ 
 			filename: datadir + "/guilds.db", 
 			autoload: true })
 };
 
+function init_guild(guild){
+	return new Promise(resolve => {
+		databases.guilds.count({ id: guild.id }, (err, count) => {
+			if (err) throw err;
+			if (count == 0){
+				// Give default values, insert it.
+				databases.guilds.insert({ id: guild.id, prefix: "a!" }, err2 => {
+					if(err2) throw err2;
+					resolve();
+				});
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
 module.exports = {
 	databases: databases,
 	/**
-	 * This was a mistake, much like my life :)
-	 * @param {Discord.Client} client - The currently initialized discord client. (In the ready state :3)
+	 * Initialize the storage module
+	 * @param {Discord.Client} client - The currently initialized discord client. (In the ready state)
 	 */
 	initialize: client => {
-		var doc = databases.guildDb.getAllData()[0];
-		if (!doc) {
-			var newDoc = { _id: 'guilds' };
+		return new Promise(resolve => {
+			logger.logInfo("Initializing storage module");
+
+			// If there are no guilds, prevent the whole thing from freezing up.
+			if(client.guilds.size == 0){
+				resolve();
+				return;
+			}
+
+			// Loop through each guild, and if it doesn't exist in the database, insert it.
+			var i = 0;
 			client.guilds.forEach(guild => {
-				newDoc[guild.id] = {
-					prefix: 'a!'
-				};
+				init_guild(guild).then(() => {
+					i++;
+					if(i >= client.guilds.size){
+						resolve();
+					}
+				});
 			});
-			databases.guildDb.insert(newDoc, err => {if (err) throw err;});
-		}
+		});
 	},
 	/**
-	 * Returns the database as a javascript object
-	 * @returns {JSON}
+	 * Initialize a new guild
+	 * @param {Discord.Guild} guild
 	 */
-	databasesRAW: {
-		guildDb: databases.guildDb.getAllData()[0],		
+	initGuild: guild => {
+		return new Promise(resolve => {
+			init_guild(guild).then(() => {
+				resolve();
+			});
+		});
 	},
 	/**
 	 * Find an element in the specified guild.
-	 * @param {string} guild - The id of the guild to access
+	 * @param {string} guildId - The id of the guild to access
 	 * @param {string} element - The element to find in the guild, e.g. "prefix"
 	 */
-	findInGuild: (guild, element) => {
-		return databases.guildDb.getAllData()[0][guild][element];
+	findInGuild: (guildId, element) => {
+		return new Promise(resolve => {
+			databases.guilds.findOne({ id: guildId }, (err, doc) => {
+				if (err) throw err;
+				resolve(doc[element]);
+			});
+		});
 	},
 	/**
 	 * Add a value to an element in the specified guild.
-	 * @param {string} guild - The id of the guild to access
+	 * @param {string} guildId - The id of the guild to access
 	 * @param {string} element - The element to change in the guild, e.g. "prefix"
 	 * @param {any} value - The value to set
 	 */
-	addInGuild: (guild, element, value) => {
-		databases.guildDb.update({ _id: "guilds" }, { $set: { [guild]: { [element]: value } } }, {}, function (err) {
-			if (err) throw err;
-		});		
+	addInGuild: (guildId, element, value) => {
+		return new Promise(resolve => {
+			databases.guilds.update({ id: guildId }, { $set: { [element]: value } }, {}, err => {
+				if (err) throw err;
+				resolve();
+			});
+		});
 	},
 	/**
 	 * Remove a specified guild from the database
-	 * @param {string} guild - The id of the guild to remove.
+	 * @param {string} guildId - The id of the guild to remove.
 	 */
-	removeGuild: function (guild) {
-		databases.guildDb.remove({ [guild]: { $exists: true } }, {}, err => {
-			if (err) throw err;
+	removeGuild: guildId => {
+		return new Promise(resolve => {
+			databases.guilds.remove({ id: guildId }, {}, err => {
+				if (err) throw err;
+				resolve();
+			});
 		});
 	}
 };

@@ -21,10 +21,9 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 const commandHandler = require('./core/commands.js');
-
-let guildData;
-
 const storageHandler = require('./core/storage.js');
+
+let fullyReady = false;
 
 /**
  * Quick little helper function to connect quotes together
@@ -66,11 +65,12 @@ function connectQuotes (args) {
 }
 
 // Once logged in, handle initialization of other things
-client.on('ready', () => {
-	logger.logInfo("Bot is now ready and logged in.");
-	storageHandler.initialize(client);
-	commandHandler.initialize(storageHandler);
-	guildData = storageHandler.databases.guildDb.getAllData()[0];	
+client.on('ready', async () => {
+	logger.logInfo("Connected and ready with Discord, initializing modules...");
+	await storageHandler.initialize(client);
+	commandHandler.initialize(storageHandler, client);
+	fullyReady = true;
+	logger.logInfo("Bot is now fully initialized and ready to go!");
 });
 
 // Set up the callbacks for logging
@@ -85,64 +85,66 @@ client.on('disconnect', event => {
 
 // Message handler
 client.on('message', msg => {
-	// If message did not come from a guild, ignore
-	if(!msg.guild)
+	if(!fullyReady)
 		return;
 
 	// If message came from bot, ignore
 	if(msg.author.bot) 
 		return;
 
-	guildData = storageHandler.databases.guildDb.getAllData()[0];
-
-	// If guild isn't in the database, update it
-	if (!guildData[msg.guild.id]) {
-		// Add the prefix element to the database under the guild id, thus adding the guild to the database
-		storageHandler.addInGuild(msg.guild.id, 'prefix', 'a!');
-
-		// Since we've updated the database, we need to update the guildData variable
-		guildData = storageHandler.databases.guildDb.getAllData()[0];
+	// If message did not come from a guild, ignore and send message
+	if(!msg.guild){
+		msg.author.send("Sorry, but I only accept messages from servers!");
+		return;
 	}
 
-	
-	
-	// If prefix for this guild is not defined, make it a bot ping!
-	if(guildData == null || guildData[msg.guild.id].prefix == undefined || guildData[msg.guild.id].prefix == null || guildData[msg.guild.id].prefix == "")
-		guildData[msg.guild.id].prefix = `<@${client.user.id}>`;	
+	// Confirm the guild has initialized.
+	storageHandler.initGuild(msg.guild).then(() => {
+		storageHandler.findInGuild(msg.guild.id, "prefix").then(prefix => {
+			if(!prefix){
+				prefix = `<@${client.user.id}>`;
+			}
 
-	// If message does not start with prefix, ignore
-	if(!msg.content.startsWith(guildData[msg.guild.id].prefix))
-		return;
+			// If message does not start with prefix, ignore
+			if(!msg.content.startsWith(prefix))
+				return;
 
-	msg.prefix = guildData[msg.guild.id].prefix;
+			// Assign custom values to the message object, for use in the command module
+			msg.prefix = prefix;
 
-	// Split message by the spaces into arguments
-	var args = msg.content.split(" ");	
+			// Split message by the spaces into arguments
+			var args = msg.content.split(" ");	
 
-	// If prefix is a ping
-	if(guildData[msg.guild.id].prefix == `<@${client.user.id}>`)
-		args.splice(0, 1);
+			// If prefix is a ping
+			if(prefix == `<@${client.user.id}>`)
+				args.splice(0, 1);
 
-	// Grab function name without the prefix
-	var name = args[0].replace(guildData[msg.guild.id].prefix, "");
+			// Grab function name without the prefix
+			var name = args[0].replace(prefix, "");
 
-	// Finally remove the name of the command
-	args.splice(0, 1);
+			// Finally remove the name of the command
+			args.splice(0, 1);
 
-	// Connects quotes together, if there are any.
-	args = connectQuotes(args);
+			// Connects quotes together, if there are any.
+			args = connectQuotes(args);
 
-	logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
+			logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
 
-	// Finally, process the command
-	commandHandler.processCommand(msg, name, args);
+			// Finally, process the command
+			commandHandler.processCommand(msg, name, args);
+		});
+	});
 });
 
 client.on('guildCreate', guild => {
-	storageHandler.addInGuild(guild.id, "prefix", "a!");
+	if(!fullyReady)
+		return;
+	storageHandler.initGuild(guild);
 });
 
 client.on('guildDelete', guild => {
+	if(!fullyReady)
+		return;
 	storageHandler.removeGuild(guild.id);
 });
 

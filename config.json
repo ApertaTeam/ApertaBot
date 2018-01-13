@@ -10,10 +10,15 @@
 			"name": "test",
 			"syntax": "[PREFIX]test",
 			"description": "Checks if the bot happens to be alive."
+		},
+		{
+			"name": "prefix",
+			"syntax": "[PREFIX]prefix <optional: new prefix>",
+			"description": "Change the prefix for the current server. Admin-only."
 		}
 	],
 	"creatorIds": [
-		"293112796672163841",
+		"BEEP-293112796672163841-BEEP",
 		"201785548900139009"
 	]
 }
