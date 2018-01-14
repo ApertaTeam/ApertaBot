@@ -25,7 +25,7 @@
   "homepage": "https://github.com/ApertaTeam/ApertaBot#readme",
   "dependencies": {
     "app-root-path": "^2.0.1",
-    "discord.js": "^11.2.1",
+    "discord.js": "^11.3.0",
     "ffmpeg-binaries": "^3.2.2-3",
     "nedb": "^1.8.0",
     "opusscript": "0.0.6"
