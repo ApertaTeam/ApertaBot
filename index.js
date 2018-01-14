@@ -1,7 +1,7 @@
 'use strict';
 
 const logger = require("./core/logger.js");
-logger.setLogLevel(parseInt(require('./config.json').logLevel));
+logger.setLogLevel(require('./config.json').logLevel);
 
 logger.logPlain("\\/\\/\\/---------------\\/\\/\\/");
 logger.logPlain(`ApertaBot version ${require('./package.json').version}`);
@@ -22,6 +22,7 @@ const client = new Discord.Client();
 
 const commandHandler = require('./core/commands.js');
 const storageHandler = require('./core/storage.js');
+const voiceHandler = require('./core/voice.js');
 
 let fullyReady = false;
 
@@ -67,8 +68,16 @@ function connectQuotes (args) {
 // Once logged in, handle initialization of other things
 client.on('ready', async () => {
 	logger.logInfo("Connected and ready with Discord, initializing modules...");
+
+	// Initialize modules
 	await storageHandler.initialize(client);
 	commandHandler.initialize(storageHandler, client);
+	voiceHandler.initialize(client);
+
+	// Start timers
+	setInterval(update, require('./config.json').updateTime * 1000);
+
+	// Mark the bot as ready to go!
 	fullyReady = true;
 	logger.logInfo("Bot is now fully initialized and ready to go!");
 });
@@ -82,6 +91,11 @@ client.on('warn', msg => logger.logWarn(msg));
 client.on('disconnect', event => {
 	logger.logWarn(`Disconnected from Discord. CloseEvent code: ${event.code}. Reason: ${event.reason}`);
 });
+
+// Update things such as reminders, etc.
+function update(){
+
+}
 
 // Message handler
 client.on('message', msg => {

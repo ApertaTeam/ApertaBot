@@ -1,5 +1,7 @@
 {
-	"logLevel": "3",
+	"logLevel": 3,
+	"updateTime": 15,
+	"maxVoiceChannels": 3,
 	"commands": [
 		{
 			"name": "help",

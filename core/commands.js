@@ -3,6 +3,7 @@
 const fs = require('fs');
 const Discord = require('discord.js');
 const logger = require("./logger.js");
+const voice = require("./voice.js");
 
 var commands;
 /**
@@ -239,6 +240,42 @@ let handlers = [
 			logger.logError(err.stack);
 			return msg.channel.send(`Eval returned the following error: ${err.message}`);
 		});
+		return CommandStatus.Success;
+	},
+	function cmd_joinvoice(msg, args){
+		if(args.length > 0)
+			return CommandStatus.InvalidSyntax;
+		let join = voice.joinUserChannel(msg.member);
+		if(join instanceof Promise){
+			var toEdit = msg.channel.send("Connecting to the voice channel...");
+			join.then(connection => {
+				toEdit.then(m => {
+					m.edit("Connected successfully to the voice channel.");
+				});
+			});
+		} else {
+			if(join == voice.VoiceFailStatus.MaxChannelsInUse){
+				msg.channel.send("Sorry, but I've reached my maximum amount of voice channels! Wait for some to end.");
+			} else if(join == voice.VoiceFailStatus.NotInChannel){
+				msg.channel.send("You must join a voice channel first.");
+			}
+		}
+		return CommandStatus.Success;
+	},
+	function cmd_leavevoice(msg, args){
+		if(args.length > 0)
+			return CommandStatus.InvalidSyntax;
+		if(voice.disconnect(msg.member)){
+			msg.channel.send("Disconnected from voice channel.");
+		} else {
+			msg.channel.send("I'm not currently in a voice channel with you.");
+		}
+		return CommandStatus.Success;
+	},
+	function cmd_testmusic(msg, args){
+		if(args.length > 0)
+			return CommandStatus.InvalidSyntax;
+		voice.playLocalFile(msg.member, `${require('app-root-path')}/resources/For Future Use One.mp3`);
 		return CommandStatus.Success;
 	}
 ];
