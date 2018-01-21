@@ -1,26 +1,66 @@
 {
-	"logLevel": 3,
-	"updateTime": 15,
-	"maxVoiceChannels": 3,
-	"commands": [
-		{
-			"name": "help",
-			"syntax": "[PREFIX]help <optional: command name>",
-			"description": "Gets help with commands and how to use the bot."
-		},
-		{
-			"name": "test",
-			"syntax": "[PREFIX]test",
-			"description": "Checks if the bot happens to be alive."
-		},
-		{
-			"name": "prefix",
-			"syntax": "[PREFIX]prefix <optional: new prefix>",
-			"description": "Change the prefix for the current server. Admin-only."
-		}
-	],
-	"creatorIds": [
-		"293112796672163841",
-		"201785548900139009"
-	]
+    "logLevel": 3,
+    "updateTime": 15,
+    "maxVoiceChannels": 3,
+    "commands": [
+        {
+            "name": "help",
+            "syntax": "[PREFIX]help <optional: command name>",
+            "description": "Gets help with commands and how to use the bot."
+        },
+        {
+            "name": "test",
+            "syntax": "[PREFIX]test",
+            "description": "Checks if the bot happens to be alive."
+        },
+        {
+            "name": "invite",
+            "syntax": "[PREFIX]invite",
+            "description": "Get the bot's invite link."
+        },
+        {
+            "name": "prefix",
+            "syntax": "[PREFIX]prefix <optional: new prefix>",
+            "description": "Change the prefix for the current server. Admin-only."
+        },
+        {
+            "name": "addbotadmin",
+            "syntax": "[PREFIX]addbotadmin @user1 <optional: more users>",
+            "description": "Make user(s) bot-admin. Admin-only."
+        },
+        {
+            "name": "removebotadmin",
+            "syntax": "[PREFIX]removebotadmin @user1 <optional: more users>",
+            "description": "Remove user(s) bot-admin status. Admin-only."
+        },
+        {
+            "name": "docs",
+            "syntax": "[PREFIX]docs [Class]#<optional: [subproperty]>\n[PREFIX]docs .[Typedef]",
+            "description": "Checks the Discord.js docs for the specified info."
+        },
+        {
+            "name": "eval",
+            "syntax": "[PREFIX]eval [javascript code]",
+            "description": "Runs javascript code. Admin-only."
+        },
+        {
+            "name": "joinvoice",
+            "syntax": "[PREFIX]joinvoice",
+            "description": "Joins the user's voice channel."
+        },
+        {
+            "name": "leavevoice",
+            "syntax": "[PREFIX]leavevoice",
+            "description": "Leaves the user's voice channel."
+        },
+        {
+            "name": "tag",
+            "syntax": "[PREFIX]tag <optional: options> tagname <optional: tag contents if creating a tag>",
+            "description": "Creates/Deletes/Views a specified tag saved to the user's guild."
+        }
+    ],
+    "creatorIds": [
+        "293112796672163841",
+        "201785548900139009"
+    ]
 }

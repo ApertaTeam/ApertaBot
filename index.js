@@ -140,7 +140,7 @@ client.on('message', msg => {
 			args.splice(0, 1);
 
 			// Connects quotes together, if there are any.
-			args = connectQuotes(args);
+			args = connectQuotes(args);			
 
 			logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
 
