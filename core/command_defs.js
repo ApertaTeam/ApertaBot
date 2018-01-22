@@ -24,13 +24,13 @@ let dclient;
 module.exports = {
 	initialize: (storageHandler, client) => {
 		logger.logInfo("Initializing command module");
-	
+
 		// Load config.json
 		let data = require('../config.json');
 		if (!data.commands || !data.creatorIds){
 			throw new Error("Invalid config.json");
 		}
-	
+
 		// Assign variables for use later
 		commands = data.commands;
 		creators = data.creatorIds;
@@ -86,7 +86,7 @@ module.exports = {
 				return CommandStatus.NoPermission;
 			if(!msg.member.hasPermission('ADMINISTRATOR'))
 				return CommandStatus.NoAdminPermission;
-			if (args.length > 1) 
+			if (args.length > 1)
 				return CommandStatus.InvalidSyntax;
 			var guildid = msg.guild.id;
 			var prefix = {};
@@ -96,13 +96,13 @@ module.exports = {
 					return CommandStatus.Success;
 				}
 			}
-			storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null).then(() => {		
+			storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null).then(() => {
 				msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : `A direct ping to the bot! For example:\n<@${msg.client.user.id}>`}`);
 			});
 			return CommandStatus.Success;
 		},
-		function cmd_addbotadmin(msg, args){			
-			if(!creators.includes(msg.author.id)) 
+		function cmd_addbotadmin(msg, args){
+			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
 			if(!msg.mentions.users.size)
 				return CommandStatus.InvalidSyntax;
@@ -120,7 +120,7 @@ module.exports = {
 
 			try {
 				fs.writeFileSync("config.json", JSON.stringify(tempJson, null, 4));
-			} catch (e) {				
+			} catch (e) {
 				logger.logError(e.stack);
 				return CommandStatus.InternalError;
 			}
@@ -163,9 +163,9 @@ module.exports = {
 			return CommandStatus.Success;
 		},
 		function cmd_docs(msg, args){
-			if(!creators.includes(msg.author.id)) 
+			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
-			if(args.length != 1) 
+			if(args.length != 1)
 				return CommandStatus.InvalidSyntax;
 			var baseURL = `https://discord.js.org/#/docs/main/${Discord.version.substring(0,Discord.version.lastIndexOf('.'))}.0`;
 			var querys = args[0].split("#");
@@ -187,25 +187,25 @@ module.exports = {
 			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
 			var code = args.join(' ');
-			evaluate(code).then(evaled => {						
+			evaluate(code).then(evaled => {
 				// This will give us the stringified version of the returned evaluated code.
 				var evaledString = require('util').inspect(evaled);
-	
+
 				// Embed fields have a character limit of 1024 characters, so if the string goes over 1014 (1024 - markdown code) characters, shorten it so it fits.
 				if(evaledString.length > 1014) evaledString = `{${evaled.constructor.name}: "${evaled.toString()}"}`;
-	
+
 				// Because I like to be stylish, I'm making an embed :3
 				const embed = new Discord.RichEmbed()
 					.setTimestamp()
 					.setColor(msg.guild.me.displayHexColor)
 					.addField('**Eval Input**', '```js\n' + code + '\n```')
 					.addField('**Eval Output**', '```js\n' + evaledString + '\n```');
-	
+
 				return msg.channel.send({embed});
 			}, reject => {
 				// I'm logging the actual stack to the console just in case it's a code error
 				logger.logError(reject.stack);
-	
+
 				// While here I'm just sending the error message, as the user doesn't need the whole stack
 				return msg.channel.send(`Eval rejected with the following error: ${reject.message}`);
 			}).catch(err => {
@@ -259,18 +259,18 @@ module.exports = {
 				args[i] = args[i].replace(/"/g, "").replace(/'/g, "");
 			}
 			if(args[0] == "create") {
-				if(args[1] == undefined || args[2] == undefined)
+				if(!(args[1]) || !(args[2]))
 					return CommandStatus.InvalidSyntax;
 				storage.findInGuild(msg.guild.id, "tag").then(tags => {
 					var found = false;
 					var newTags = [];
-					if(tags != undefined) {
+					if(tags) {
 						tags.forEach(tag => {
 							if(tag.name == args[1]) {
-								found = true;								
+								found = true;
 							}
 							newTags.push(tag);
-						});						
+						});
 					}
 					if(found) {
 						msg.channel.send("There is already a tag with that name on this server.");
@@ -291,13 +291,13 @@ module.exports = {
 			} else if (args[0] == "list") {
 				storage.findInGuild(msg.guild.id, "tag").then(tags => {
 					var tagnames = [];
-					if(tags != undefined) {
+					if(tags) {
 						tags.forEach(tag => {
 							if(tag.owner.id == msg.author.id)
 								tagnames.push(tag.name);
 						});
 					}
-					if(tagnames.length == 0) {
+					if(!tagnames.length) {
 						tagnames.push("None!");
 					}
 					var finalmsg = `Tags in server ${msg.guild.name}:\n`;
@@ -307,23 +307,23 @@ module.exports = {
 					msg.author.send(finalmsg);
 				});
 			} else if (args[0] == "delete") {
-				if(args[1] == undefined)
+				if(!(args[1]))
 					return CommandStatus.InvalidSyntax;
 				storage.findInGuild(msg.guild.id, "tag").then(tags => {
 					var newtags = [];
 					var found = false;
-					if(tags != undefined) {
+					if(tags) {
 						tags.forEach(tag => {
 							if(tag.name == args[1]) {
 								if(tag.owner.id != msg.author.id) {
-									msg.channel.send("This tag doesn't belong to you!");									
+									msg.channel.send("This tag doesn't belong to you!");
 									found = true;
 								} else {
-									msg.channel.send("Successfully deleted tag.");									
+									msg.channel.send("Successfully deleted tag.");
 									found = true;
 									return;
 								}
-																
+
 							}
 							newtags.push(tag);
 						});
@@ -334,7 +334,7 @@ module.exports = {
 					storage.addInGuild(msg.guild.id, "tag", newtags);
 				});
 			} else {
-				if(args[0] == undefined)
+				if(!(args[0]))
 					return CommandStatus.InvalidSyntax;
 				storage.findInGuild(msg.guild.id, "tag").then(tags => {
 					var found = false;
@@ -380,7 +380,7 @@ function get_command_syntax(name, prefix){
 
 /**
  * A helper function for the eval command
- * @param {string} code 
+ * @param {string} code
  */
 function evaluate (code) {
 	return new Promise((resolve, reject) => {
