@@ -1,0 +1,36 @@
+@font-face {
+	font-family: 'Dreamt';
+	src: url('/font/Dreamt.eot');
+	src: url('/font/Dreamt.eot?#iefix') format('embedded-opentype'),
+		 url('/font/Dreamt.woff') format('woff'),
+		 url('/font/Dreamt.ttf') format('truetype');
+}
+
+body {
+    background-color: #000;
+}
+
+p {
+    font-family: 'Dreamt';
+    font-size: 16px;
+    color: #fff;
+}
+
+h1 {
+    font-family: 'Dreamt';
+    font-size: 36px;
+    color: #fff;
+    font-weight: normal;
+    font-style: normal;
+}
+
+.vspace {
+    padding-bottom: 20px;
+}
+
+.wline {
+	height: 2px;
+	width: 100%;
+	background-color: #808080;
+	margin-bottom: 12px;
+}

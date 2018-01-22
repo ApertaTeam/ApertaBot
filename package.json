@@ -25,10 +25,12 @@
   "homepage": "https://github.com/ApertaTeam/ApertaBot#readme",
   "dependencies": {
     "app-root-path": "^2.0.1",
+    "cookie": "^0.3.1",
     "discord.js": "^11.3.0",
     "ffmpeg-binaries": "^3.2.2-3",
     "nedb": "^1.8.0",
-    "opusscript": "0.0.6"
+    "opusscript": "0.0.6",
+    "socket.io": "^2.0.4"
   },
   "engines": {
     "node": "9.3.0",

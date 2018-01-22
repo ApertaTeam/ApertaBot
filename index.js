@@ -23,6 +23,7 @@ const client = new Discord.Client();
 const commandHandler = require('./core/commands.js');
 const storageHandler = require('./core/storage.js');
 const voiceHandler = require('./core/voice.js');
+const interact = require('./core/interact.js');
 
 let fullyReady = false;
 
@@ -73,6 +74,7 @@ client.on('ready', async () => {
 	await storageHandler.initialize(client);
 	commandHandler.initialize(storageHandler, client);
 	voiceHandler.initialize(client);
+	interact.initialize();
 
 	// Start timers
 	setInterval(update, require('./config.json').updateTime * 1000);

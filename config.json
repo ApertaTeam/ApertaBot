@@ -2,6 +2,20 @@
 	"logLevel": 3,
 	"updateTime": 15,
 	"maxVoiceChannels": 3,
+	"text": {
+		"games": [
+			"with Node.js",
+			"on GitHub",
+			"with my repository",
+			"https://github.com/ApertaTeam/ApertaBot/"
+		]
+	},
+	"server": {
+		"enabled": true,
+		"port": 8080,
+		"password": "aperta_default_password",
+		"salt": "default_salt"
+	},
 	"commands": [
 		{
 			"name": "help",
