@@ -9,7 +9,8 @@ var CommandStatus = {
 	NoPermission: 2,
 	NoAdminPermission: 3,
 	BotAdminsOnly: 4,
-	InternalError: 5
+	InternalError: 5,
+	TooLong: 6
 };
 
 var commands;
@@ -23,13 +24,13 @@ let dclient;
 module.exports = {
 	initialize: (storageHandler, client) => {
 		logger.logInfo("Initializing command module");
-	
+
 		// Load config.json
 		let data = require('../config.json');
 		if (!data.commands || !data.creatorIds){
 			throw new Error("Invalid config.json");
 		}
-	
+
 		// Assign variables for use later
 		commands = data.commands;
 		creators = data.creatorIds;
@@ -45,7 +46,7 @@ module.exports = {
 				commands.forEach(command => {
 					if(command.name == args[0]){
 						found = true;
-						msg.author.send(`\`\`\`\nSyntax for command "${args[0]}":\n${get_command_syntax(args[0], msg.prefix)}\n\`\`\``);
+						msg.channel.send(`\`\`\`yaml\nSyntax for command "${args[0]}":\n${get_command_syntax(args[0], msg.prefix)}\n\`\`\``);
 					}
 				});
 				// If it doesn't exist, display an error
@@ -54,7 +55,7 @@ module.exports = {
 				}
 			} else {
 				// Display syntax and commands
-				let stringBuild = "```\n";
+				let stringBuild = "```yaml\n";
 				stringBuild += `Syntax:\n${get_command_syntax('help', msg.prefix)}\n\nCommands:\n`;
 				commands.forEach(command => {
 					if(command.name == "help")
@@ -85,7 +86,7 @@ module.exports = {
 				return CommandStatus.NoPermission;
 			if(!msg.member.hasPermission('ADMINISTRATOR'))
 				return CommandStatus.NoAdminPermission;
-			if (args.length > 1) 
+			if (args.length > 1)
 				return CommandStatus.InvalidSyntax;
 			var guildid = msg.guild.id;
 			var prefix = {};
@@ -95,21 +96,76 @@ module.exports = {
 					return CommandStatus.Success;
 				}
 			}
-			storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null).then(() => {		
+			storage.addInGuild(guildid, "prefix", args[0] != undefined ? args[0] : null).then(() => {
 				msg.channel.send(`The prefix is now: ${args[0] != undefined ? args[0] : `A direct ping to the bot! For example:\n<@${msg.client.user.id}>`}`);
 			});
 			return CommandStatus.Success;
 		},
-		function cmd_sudo(msg, args){
-			if(!creators && msg.author);
-			if(!creators.includes(msg.author.id)) 
+		function cmd_addbotadmin(msg, args){
+			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
+			if(!msg.mentions.users.size)
+				return CommandStatus.InvalidSyntax;
+
+			// Loop through mentions, ignoring any users that are already bot admins
+			msg.mentions.users.forEach(user => {
+				if(!creators.includes(user.id))
+					creators.push(user.id);
+			});
+
+			// Grab the config.json as an object for easy access
+			var tempJson = require('../config.json');
+
+			tempJson["creatorIds"] = creators;
+
+			try {
+				fs.writeFileSync("config.json", JSON.stringify(tempJson, null, 4));
+			} catch (e) {
+				logger.logError(e.stack);
+				return CommandStatus.InternalError;
+			}
+
+			if(msg.mentions.users.size > 1)
+				msg.channel.send("Successfully added bot admins.");
+			else
+				msg.channel.send("Successfully added bot admin.");
+
+			return CommandStatus.Success;
+		},
+		function cmd_removebotadmin(msg, args){
+			if(!creators.includes(msg.author.id))
+				return CommandStatus.BotAdminsOnly;
+			if(!msg.mentions.users.size)
+				return CommandStatus.InvalidSyntax;
+
+			// Loop through mentions, ignoring any users that aren't bot admins
+			msg.mentions.users.forEach(user => {
+				if(creators.includes(user.id) && (user.id != msg.author.id))
+					creators.splice(creators.indexOf(user.id), 1);
+			});
+
+			// Grab the config.json as an object for easy access
+			var tempJson = require('../config.json');
+
+			tempJson["creatorIds"] = creators;
+
+			try {
+				fs.writeFileSync("config.json", JSON.stringify(tempJson, null, 4));
+			} catch (e) {
+				logger.logError(e.stack);
+				return CommandStatus.InternalError;
+			}
+
+			if(msg.mentions.users.size > 1)
+				msg.channel.send("Successfully removed bot admins.")
+			else
+				msg.channel.send("Successfully removed bot admin.");
 			return CommandStatus.Success;
 		},
 		function cmd_docs(msg, args){
-			if(!creators.includes(msg.author.id)) 
+			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
-			if(args.length != 1) 
+			if(args.length != 1)
 				return CommandStatus.InvalidSyntax;
 			var baseURL = `https://discord.js.org/#/docs/main/${Discord.version.substring(0,Discord.version.lastIndexOf('.'))}.0`;
 			var querys = args[0].split("#");
@@ -131,25 +187,25 @@ module.exports = {
 			if(!creators.includes(msg.author.id))
 				return CommandStatus.BotAdminsOnly;
 			var code = args.join(' ');
-			evaluate(code).then(evaled => {						
+			evaluate(code).then(evaled => {
 				// This will give us the stringified version of the returned evaluated code.
 				var evaledString = require('util').inspect(evaled);
-	
+
 				// Embed fields have a character limit of 1024 characters, so if the string goes over 1014 (1024 - markdown code) characters, shorten it so it fits.
 				if(evaledString.length > 1014) evaledString = `{${evaled.constructor.name}: "${evaled.toString()}"}`;
-	
+
 				// Because I like to be stylish, I'm making an embed :3
 				const embed = new Discord.RichEmbed()
 					.setTimestamp()
 					.setColor(msg.guild.me.displayHexColor)
 					.addField('**Eval Input**', '```js\n' + code + '\n```')
 					.addField('**Eval Output**', '```js\n' + evaledString + '\n```');
-	
+
 				return msg.channel.send({embed});
 			}, reject => {
 				// I'm logging the actual stack to the console just in case it's a code error
 				logger.logError(reject.stack);
-	
+
 				// While here I'm just sending the error message, as the user doesn't need the whole stack
 				return msg.channel.send(`Eval rejected with the following error: ${reject.message}`);
 			}).catch(err => {
@@ -194,6 +250,108 @@ module.exports = {
 				return CommandStatus.InvalidSyntax;
 			voice.playLocalFile(msg.member, `${require('app-root-path')}/resources/For Future Use One.mp3`);
 			return CommandStatus.Success;
+		},
+		function cmd_modlog(msg, args){
+			// TODO: Make this ig lmao
+		},
+		function cmd_tag(msg, args){
+			for(var i = 0; i < args.length; i++) {
+				args[i] = args[i].replace(/"/g, "").replace(/'/g, "");
+			}
+			if(args[0] == "create") {
+				if(!(args[1]) || !(args[2]))
+					return CommandStatus.InvalidSyntax;
+				storage.findInGuild(msg.guild.id, "tag").then(tags => {
+					var found = false;
+					var newTags = [];
+					if(tags) {
+						tags.forEach(tag => {
+							if(tag.name == args[1]) {
+								found = true;
+							}
+							newTags.push(tag);
+						});
+					}
+					if(found) {
+						msg.channel.send("There is already a tag with that name on this server.");
+						return;
+					}
+					newTags.push({
+						name: args[1],
+						owner: {
+							name: msg.author.username,
+							id: msg.author.id
+						},
+						contents: args[2]
+					});
+					storage.addInGuild(msg.guild.id, "tag", newTags).then(() => {
+						msg.channel.send(`Successfully added your tag: ${args[1]}`);
+					});
+				});
+			} else if (args[0] == "list") {
+				storage.findInGuild(msg.guild.id, "tag").then(tags => {
+					var tagnames = [];
+					if(tags) {
+						tags.forEach(tag => {
+							if(tag.owner.id == msg.author.id)
+								tagnames.push(tag.name);
+						});
+					}
+					if(!tagnames.length) {
+						tagnames.push("None!");
+					}
+					var finalmsg = `Tags in server ${msg.guild.name}:\n`;
+					tagnames.forEach(tag => {
+						finalmsg += tag + "\n";
+					});
+					msg.author.send(finalmsg);
+				});
+			} else if (args[0] == "delete") {
+				if(!(args[1]))
+					return CommandStatus.InvalidSyntax;
+				storage.findInGuild(msg.guild.id, "tag").then(tags => {
+					var newtags = [];
+					var found = false;
+					if(tags) {
+						tags.forEach(tag => {
+							if(tag.name == args[1]) {
+								if(tag.owner.id != msg.author.id) {
+									msg.channel.send("This tag doesn't belong to you!");
+									found = true;
+								} else {
+									msg.channel.send("Successfully deleted tag.");
+									found = true;
+									return;
+								}
+
+							}
+							newtags.push(tag);
+						});
+					}
+					if(!found) {
+						msg.channel.send("Couldn't find the specified tag.");
+					}
+					storage.addInGuild(msg.guild.id, "tag", newtags);
+				});
+			} else {
+				if(!(args[0]))
+					return CommandStatus.InvalidSyntax;
+				storage.findInGuild(msg.guild.id, "tag").then(tags => {
+					var found = false;
+					if(tags) {
+						tags.forEach(tag => {
+							if(tag.name == args[0]) {
+								found = true;
+								return msg.channel.send(`${tag.contents}`);
+							}
+						});
+					}
+					if(!found) {
+						msg.channel.send(`Couldn't find the tag "${args[0]}"`);
+					}
+				});
+			}
+			return CommandStatus.Success;
 		}
 	]
 }
@@ -209,7 +367,7 @@ function get_command_syntax(name, prefix){
 	commands.forEach(command => {
 		if(command.name == name){
 			found = true;
-			syntax = command.syntax.replace("[PREFIX]", prefix);
+			syntax = command.syntax.replace(/\[PREFIX\]/g, prefix);
 		}
 	});
 	if(!found){
@@ -222,7 +380,7 @@ function get_command_syntax(name, prefix){
 
 /**
  * A helper function for the eval command
- * @param {string} code 
+ * @param {string} code
  */
 function evaluate (code) {
 	return new Promise((resolve, reject) => {

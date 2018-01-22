@@ -8,20 +8,28 @@ var CommandStatus = {
 	NoPermission: 2,
 	NoAdminPermission: 3,
 	BotAdminsOnly: 4,
-	InternalError: 5
+	InternalError: 5,
+	TooLong: 6
 };
 
 module.exports = {
 	initialize: defs.initialize,
 	processCommand: (msg, name, args) => {
-		let found = false;		
+		let found = false;	
+		let status;	
 		// Iterate through all the handlers
 		defs.handlers.forEach(handler => {
 			// Checks if the current command handler is the one we want
 			if(handler.name == `cmd_${name}`) {
 				// If so, break out of the loop with a return, calling the handler as well
 				found = true;
-				let status = handler(msg, args);
+				for(var i = 0; i < args.length; i++) {
+					if(args[i].length > 200) {
+						status = CommandStatus.TooLong;
+					}
+				}
+				if(!status)
+					status = handler(msg, args);
 				if(status != CommandStatus.Success){
 					switch(status){
 						case CommandStatus.InvalidSyntax:
@@ -38,6 +46,9 @@ module.exports = {
 							break;
 						case CommandStatus.BotAdminsOnly:
 							msg.channel.send("Only bot administrators can do that.");
+							break;
+						case CommandStatus.TooLong:
+							msg.channel.send("One or more of the parameters passed were too long.");
 							break;
 						default:
 							msg.channel.send("Something went wrong internally.\nTechnical details: Command function returned invalid CommandStatus code.");
