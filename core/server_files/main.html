@@ -11,9 +11,49 @@
             <div class="row">
                 <h1 class="col-sm-12 text-center">ApertaBot Control Panel</h1>
                 <div class="col-sm-12 wline"></div>
-                <input type="text">
+                <div class="console"><p class="console-text"></p></div>
+                <input id="textbox" type="text">
             </div>
         </div>
+        <script type="text/javascript">
+            document.getElementById("textbox").onkeydown = function (e) {
+              if (e.keyCode == 13) {
+                var log = document.getElementsByClassName("console-text")[0];
+                var input = document.getElementById("textbox");
+                var val = cleanInput(input.value);
+                input.value = "";
+                log.innerHTML += val;
+              }
+            }
+
+            function cleanInput(input) {
+              var newInput = input.replace(/[&<>]/g, replaceTag);
+              newInput = newInput.trim();
+              if(!newInput)
+                return '';
+              if(newInput.startsWith("[ERROR]")) {
+                newInput = '<span class="error">' + newInput + '</span>';
+              } else if (newInput.startsWith("[DEBUG]")) {
+                newInput = '<span class="debug">' + newInput + '</span>';
+              } else if (newInput.startsWith("[WARN]")) {
+                newInput = '<span class="warn">' + newInput + '</span>';
+              } else if (newInput.startsWith("[INFO]")) {
+                newInput = '<span class="info">' + newInput + '</span>';
+              }
+              newInput += "<br>";
+              return newInput;
+            }
+
+            function replaceTag(tag) {
+              return tags[tag] || tag;
+            }
+
+            var tags = {
+              '&': '&amp;',
+              '<': '&lt;<span class="html">',
+              '>': '</span>&gt;'
+            }
+        </script>
         <script type="text/javascript" src="/socket.io.js"></script>
         <script type="text/javascript" src="/main.js"></script>
     </body>

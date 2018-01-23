@@ -2,9 +2,98 @@
 <html lang="en">
     <head>
         <title>404: Not Found</title>
+        <style>
+          @font-face {
+            font-family: 'Dreamt';
+            src: url('/font/Dreamt.eot');
+            src: url('/font/Dreamt.eot?#iefix') format('embedded-opentype'),
+            url('/font/Dreamt.woff') format('woff'),
+            url('/font/Dreamt.ttf') format('truetype');
+          }
+          body {
+            background-color: #154360;
+          }
+          html, body {
+            height: 100%;
+          }
+
+          button {
+
+            font-family: 'Dreamt';
+            font-size: 16px;
+            background-color: #eee;            
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer; cursor: hand;
+          }
+          button:hover {
+            background-color: #cfd8dc;
+          }
+          button:disabled {
+            background-color: #eee;
+            color: #ccc;
+            cursor: auto;
+          }
+
+          .four-oh-four {
+            position: absolute;
+            text-align: center;
+            color: #eee;
+            font-family: 'Dreamt';
+            font-size: 32px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          }
+
+          .container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+          }
+
+          .galaxy {
+            margin: 0 auto;
+            display: block;
+          }
+
+          svg {
+            fill: #17202A;
+            filter: blur(5px);
+          }
+        </style>
+        <script>
+          window.onload = function() {
+            var mes = document.getElementById('404mes');
+            var ran = Math.floor(Math.random() * 3);
+            switch(ran) {
+              case 0:
+                mes.innerText = "The path you requested does not exist.";
+                break;
+              case 1:
+                mes.innerText = "The path you requested got sucked into a black hole.";
+                break;
+              case 2:
+                mes.innerText = "The path you requested is in another castle.";
+                break;
+            }
+          }
+
+          function home() {
+            window.location.href = "/";
+          }
+        </script>
     </head>
     <body>
-        <h2>404: Not Found</h2>
-        <p>The path you requested does not exist.</p>
+        <div class="container">
+            <svg class="galaxy" width="40%" version="1.1" viewBox="0 0 168 156" xmlns="http://www.w3.org/2000/svg">
+                <path d="m0 89c0-39.4 31.6-77 74-77 33.8 0 61 23.2 61 58 0 20.8-16.2 44-41 44-22 0-34-14-34-31-3.6 0-6 6-6 12 0 16.6 19.8 34 43 34 30.4 0 62-27.8 62-69 0-25.6-12.4-47-23-60 13 11 32 32.8 32 67 0 39.4-31.6 77-74 77-33.8 0-61-23.2-61-58 0-20.8 16.2-44 41-44 22 0 34 14 34 31 3.6 0 6-6 6-12 0-16.6-19.8-34-43-34-30.4 0-62 27.8-62 69 0 25.6 12.4 47 23 60-13-11-32-32.8-32-67z"/>
+            </svg>
+        </div>
+        <div class="four-oh-four">
+            <h2>404: Not Found</h2>
+            <p id="404mes"></p>
+            <button onclick="home()">Home</button>
+        </div>
     </body>
 </html>

@@ -34,3 +34,42 @@ h1 {
 	background-color: #808080;
 	margin-bottom: 12px;
 }
+
+.console {
+	height: 450px;
+	width: 100%;
+	margin-bottom: 12px;
+	border-color: #808080;
+	border-radius: 2px;
+	border-style: groove;
+	background-color: #101010;
+}
+
+.console-text {
+	overflow-y: auto;
+	max-height: 445px;
+	max-width: 100%;
+	font-size: 26px;
+	padding-top: 0.5em;
+	padding-left: 0.5em;
+}
+
+.console-text .error {
+	color: #de4040;
+}
+
+.console-text .debug {
+	color: #ffa500;
+}
+
+.console-text .warn {
+	color: #4444de;
+}
+
+.console-text .info {
+	color: #40de40;
+}
+
+.console-text .html {
+	color: rgb(162, 39, 39);
+}
