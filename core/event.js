@@ -64,6 +64,10 @@ function channelDelete(channel) {
 	}
 	storageHandler.findInGuild(channel.guild.id, "log").then(log => {
 		if(log) {
+      if(log == channel.id) {
+        storageHandler.removeInGuild(channel.guild.id, "log");
+        return;
+      }
 			var logChannel = channel.guild.channels.get(log);
 			var logEmbed = new Discord.RichEmbed().setAuthor(channel.guild.name, channel.guild.iconURL)
 				.setTitle(`Channel Delete: ${channel.name}`)
@@ -117,6 +121,50 @@ function channelUpdate(oldChan, newChan) {
 	});
 }
 
+function guildUpdate(oldGuild, newGuild) {
+  storageHandler.findInGuild(oldGuild.id, "log").then(log => {
+    if(log) {
+      let changeType = null;
+      if(oldGuild.name !== newGuild.name) {
+        changeType = "Name";
+      } else if(oldGuild.verificationLevel !== newGuild.verificationLevel) {
+        changeType = "Verification";
+      } else if(oldGuild.region !== newGuild.region) {
+        changeType = "Region";
+      } else if(oldGuild.icon !== newGuild.icon) {
+        changeType = "Icon";
+      }
+      if(!changeType) return;
+
+      let verificationLevel = {
+        0: "None",
+        1: "Low",
+        2: "Medium",
+        3: "(╯°□°）╯︵ ┻━┻",
+        4: "┻━┻ ﾐヽ(ಠ益ಠ)ノ彡┻━┻"
+      };
+
+      var logChannel = oldGuild.channels.get(log);
+      var logEmbed = new Discord.RichEmbed().setAuthor(newGuild.name, newGuild.iconURL).setTitle(`Guild ${changeType} Updated`);
+      switch(changeType) {
+        case "Name":
+          logEmbed.setDescription(`**${oldGuild.name}** ⟶ **${newGuild.name}**`);
+          break;
+        case "Verification":
+          logEmbed.setDescription(`${verificationLevel[oldGuild.verificationLevel]} ⟶ ${verificationLevel[newGuild.verificationLevel]}`);
+          break;
+        case "Region":
+          logEmbed.setDescription(`**${oldGuild.region}** ⟶ **${newGuild.region}**`);
+          break;
+        case "Icon":
+          logEmbed.setDescription(`${oldGuild.iconURL} ⟶ ${newGuild.iconURL}`);
+          break;
+      }
+      logEmbed.setFooter(`ID: ${newGuild.id}`).setTimestamp().setColor(newGuild.me.displayHexColor);
+      logChannel.send(logEmbed);
+    }
+  });
+}
 // TODO: Add more log events
 
 module.exports = {
@@ -128,5 +176,6 @@ module.exports = {
     client.on('channelCreate', channelCreate);
     client.on('channelDelete', channelDelete);
     client.on('channelUpdate', channelUpdate);
+    client.on('guildUpdate', guildUpdate);
   }
 }
