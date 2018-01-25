@@ -12,7 +12,7 @@ if(!('CLIENT_TOKEN' in process.env)){
 	return;
 }
 
-if(!('APERTABOT_DATABASE_DIR' in process.env)){	
+if(!('APERTABOT_DATABASE_DIR' in process.env)){
 	logger.logWarn("Environment variable \"APERTABOT_DATABASE_DIR\" not set, defaulting to \"./Databases\"");
 	process.env.APERTABOT_DATABASE_DIR = "./Databases";
 }
@@ -24,19 +24,20 @@ const commandHandler = require('./core/commands.js');
 const storageHandler = require('./core/storage.js');
 const voiceHandler = require('./core/voice.js');
 const interact = require('./core/interact.js');
+const events = require('./core/event.js');
 
 let fullyReady = false;
 
 /**
  * Quick little helper function to connect quotes together
- * @param {Array<string>} args 
+ * @param {Array<string>} args
  */
 function connectQuotes (args) {
 	var tempArgs = [];
 	var tempString = "";
 	var inline = false;
 	var type = null;
-	args.forEach(arg => {		
+	args.forEach(arg => {
 		if(!inline) {
 			if(arg.indexOf('"') != arg.lastIndexOf('"') || arg.indexOf("'") != arg.lastIndexOf("'")) {
 				tempArgs.push(arg);
@@ -52,7 +53,7 @@ function connectQuotes (args) {
 				tempArgs.push(arg);
 			}
 		} else {
-			if(arg.includes(type)) {				
+			if(arg.includes(type)) {
 				tempString += arg;
 				inline = false;
 				type = null;
@@ -75,6 +76,7 @@ client.on('ready', async () => {
 	commandHandler.initialize(storageHandler, client);
 	voiceHandler.initialize(client);
 	interact.initialize();
+	events.initialize(client, storageHandler);
 
 	// Start timers
 	setInterval(update, require('./config.json').updateTime * 1000);
@@ -105,7 +107,7 @@ client.on('message', msg => {
 		return;
 
 	// If message came from bot, ignore
-	if(msg.author.bot) 
+	if(msg.author.bot)
 		return;
 
 	// If message did not come from a guild, ignore and send message
@@ -129,7 +131,7 @@ client.on('message', msg => {
 			msg.prefix = prefix;
 
 			// Split message by the spaces into arguments
-			var args = msg.content.split(" ");	
+			var args = msg.content.split(" ");
 
 			// If prefix is a ping
 			if(prefix == `<@${client.user.id}>`)
@@ -142,7 +144,7 @@ client.on('message', msg => {
 			args.splice(0, 1);
 
 			// Connects quotes together, if there are any.
-			args = connectQuotes(args);			
+			args = connectQuotes(args);
 
 			logger.logDebug(`User: ${msg.author.tag}. Args: ${args}. Name: ${name}`);
 
@@ -188,7 +190,7 @@ async function exitHandler(exit){
 		process.exit(1);
 		return;
 	}
-	if (exit) 
+	if (exit)
 		process.exit(0);
 }
 process.on('exit', () => exitHandler(true));

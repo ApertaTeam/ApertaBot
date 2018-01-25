@@ -8,9 +8,9 @@ if(datadir.endsWith("/"))
 	datadir = datadir.slice(0, -1);
 logger.logDebug(`Database directory: ${datadir}`);
 
-var databases = { 
-	guilds: new Datastore({ 
-			filename: datadir + "/guilds.db", 
+var databases = {
+	guilds: new Datastore({
+			filename: datadir + "/guilds.db",
 			autoload: true })
 };
 
@@ -104,6 +104,19 @@ module.exports = {
 	removeGuild: guildId => {
 		return new Promise(resolve => {
 			databases.guilds.remove({ id: guildId }, {}, err => {
+				if (err) throw err;
+				resolve();
+			});
+		});
+	},
+	/**
+	 * Remove a specified element from a guild
+	 * @param {string} guildId - The id of the guild to modify.
+	 * @param {string} element - The element to remove, e.g. "log"
+	*/
+	removeInGuild: (guildId, element) => {
+		return new Promise(resolve => {
+			databases.guilds.update({ id: guildId }, { $unset: { [element]: true }}, {}, (err) => {
 				if (err) throw err;
 				resolve();
 			});
